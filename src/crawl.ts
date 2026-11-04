@@ -48,6 +48,7 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
     const robots = opts.respectRobots === false ? null : await loadRobots(context, startUrl);
     const queue = [normalize(startUrl)];
     const seen = new Set(queue);
+    const visited = new Set<string>();
     const pages: PageRecord[] = [];
     const skippedByRobots: string[] = [];
     const forms: Omit<FormRecord, "actionSite">[] = [];
@@ -65,10 +66,19 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
       pages.push(record);
       try {
         const res = await page.goto(url, { waitUntil: "load", timeout: opts.timeoutMs ?? 30_000 });
+        // Follow redirects (www to the bare domain, say) so the same page isn't visited twice.
+        const finalUrl = normalize(page.url());
+        if (finalUrl !== url && visited.has(finalUrl)) {
+          pages.pop();
+          continue;
+        }
+        record.url = currentPage = finalUrl;
+        visited.add(finalUrl);
+        seen.add(finalUrl);
         record.status = res?.status() ?? null;
         await settle(page, opts.waitMs ?? 4000);
         record.title = await page.title();
-        forms.push(...(await collectForms(page, url)));
+        forms.push(...(await collectForms(page, finalUrl)));
         for (const link of await collectLinks(page)) {
           const next = normalize(link);
           if (!seen.has(next) && isCrawlable(next, firstPartySites)) {

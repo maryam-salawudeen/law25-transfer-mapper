@@ -1019,7 +1019,7 @@
     },
     {
       "id": "cloudflare",
-      "name": "Cloudflare (CDN, cdnjs, Turnstile)",
+      "name": "Cloudflare (CDN, cdnjs)",
       "operator": "Cloudflare, Inc.",
       "website": "https://www.cloudflare.com/",
       "privacyUrl": "https://www.cloudflare.com/privacypolicy/",
@@ -1033,6 +1033,20 @@
         "__cf_bm",
         "cf_clearance",
         "__cfruid"
+      ],
+      "hq": {
+        "country": "US"
+      }
+    },
+    {
+      "id": "cloudflare-turnstile",
+      "name": "Cloudflare Turnstile",
+      "operator": "Cloudflare, Inc.",
+      "website": "https://www.cloudflare.com/products/turnstile/",
+      "privacyUrl": "https://www.cloudflare.com/privacypolicy/",
+      "category": "captcha",
+      "domains": [
+        "challenges.cloudflare.com"
       ],
       "hq": {
         "country": "US"

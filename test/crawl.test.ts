@@ -17,7 +17,7 @@ const PAGES: Record<string, string> = {
       document.cookie = "_ga=GA1.1.42.42; path=/";
       fetch("https://region1.google-analytics.com/g/collect?v=2&tid=G-TEST&cid=42.42", { method: "POST", body: "en=page_view" });
     </script>
-    <a href="/contact">Contact</a> <a href="/private/secret">Private</a> <a href="https://elsewhere.example/">Out</a>`,
+    <a href="/contact">Contact</a> <a href="/old-home">Old home</a> <a href="/private/secret">Private</a> <a href="https://elsewhere.example/">Out</a>`,
   "/contact": `<!doctype html><title>Contact</title>
     <form action="https://forms.hsforms.com/submissions/v3" method="post">
       <input name="courriel" type="email"><input name="prenom"><button>Envoyer</button>
@@ -33,6 +33,7 @@ let outDir: string;
 
 beforeAll(async () => {
   server = createServer((req, res) => {
+    if (req.url === "/old-home") return void res.writeHead(301, { location: "/" }).end();
     const body = PAGES[req.url ?? "/"];
     if (body === undefined) return void res.writeHead(404).end();
     res.writeHead(200, { "content-type": req.url === "/robots.txt" ? "text/plain" : "text/html" }).end(body);
@@ -62,7 +63,7 @@ describe("crawl to report", () => {
       },
     });
 
-    expect(result.pages.map((p) => new URL(p.url).pathname)).toEqual(["/", "/contact"]);
+    expect(result.pages.map((p) => new URL(p.url).pathname)).toEqual(["/", "/contact"]); // "/old-home" redirects to "/", so it isn't counted twice
     expect(result.skippedByRobots.map((u) => new URL(u).pathname)).toEqual(["/private/secret"]);
     // Query values are never stored.
     expect(result.requests.every((r) => !r.url.includes("?"))).toBe(true);
