@@ -55,7 +55,7 @@ The Commission d'accès à l'information publishes a [guide to privacy impact as
 You need Node.js 20 or later.
 
 ```bash
-git clone <this repository>
+git clone https://github.com/maryam-salawudeen/law25-transfer-mapper.git
 cd law25-transfer-mapper
 npm install
 npx playwright install chromium
