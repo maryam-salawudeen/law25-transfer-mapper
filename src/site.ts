@@ -1,9 +1,12 @@
 import { getDomain, getHostname } from "tldts";
 
-/** The registrable domain ("eTLD+1") of a host or URL, e.g. "www.example.co.uk" -> "example.co.uk". */
+/**
+ * The registrable domain ("eTLD+1") of a host or URL, e.g. "www.example.co.uk" -> "example.co.uk".
+ * Shared hosting suffixes count, so "a.vercel.app" and "b.vercel.app" are different sites.
+ */
 export function registrableDomain(hostOrUrl: string): string {
   const host = (getHostname(hostOrUrl) ?? hostOrUrl).toLowerCase();
-  return getDomain(host) ?? host;
+  return getDomain(host, { allowPrivateDomains: true }) ?? host;
 }
 
 export function hostOf(url: string): string {

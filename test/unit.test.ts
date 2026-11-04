@@ -19,6 +19,8 @@ describe("site", () => {
   it("separates first and third parties", () => {
     expect(isFirstParty("cdn.example.ca", ["example.ca"])).toBe(true);
     expect(isFirstParty("example.ca.evil.com", ["example.ca"])).toBe(false);
+    // Each app on a shared host is its own site.
+    expect(isFirstParty("someone-else.vercel.app", [registrableDomain("grc-workbench.vercel.app")])).toBe(false);
   });
 
   it("matches hosts by suffix on a label boundary", () => {
