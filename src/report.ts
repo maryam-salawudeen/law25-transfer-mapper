@@ -39,7 +39,7 @@ export function summarize(a: Analysis) {
   };
 }
 
-function toJson(a: Analysis) {
+export function toJson(a: Analysis) {
   return {
     tool: "law25-transfer-mapper",
     disclaimer: DISCLAIMER,

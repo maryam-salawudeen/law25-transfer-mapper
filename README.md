@@ -2,11 +2,15 @@
 
 Find out which organizations your website sends personal information to, where they are, and draft the privacy impact assessment Québec's Law 25 requires before personal information leaves the province.
 
+**Use it online, no install: https://law25-transfer-mapper.vercel.app.** Paste a website address and you get the report and downloads in about a minute. The hosted version scans up to 5 pages and keeps nothing.
+
+Or run it on your own computer, with no page limit:
+
 ```bash
 npm run map -- https://www.example.ca --org "Example Inc."
 ```
 
-The tool opens your site in a real browser, visits up to 10 pages without clicking the consent banner, and records every request to another domain. It then writes four files:
+The tool opens your site in a real browser, visits pages without clicking the consent banner, and records every request to another domain. It then writes four files:
 
 | File | What it's for |
 | --- | --- |
@@ -115,6 +119,23 @@ The project layout:
 - `src/report.ts` writes the four outputs.
 - `src/law.ts` holds the section summaries.
 - `data/vendors.json` holds the vendor list.
+- `src/web.ts`, `src/guard.ts`, `public/index.html` and `api/scan.js` make up the hosted website.
+
+### Running the website yourself
+
+```bash
+npm run web       # http://localhost:3000, using Playwright's own Chromium
+```
+
+To host it, deploy the folder to Vercel. `vercel.json` builds `dist/`, serves `public/`, and runs `api/scan.js` as a function with [`@sparticuz/chromium`](https://github.com/Sparticuz/chromium) (2 GB memory, 120 s limit). The hosted scanner:
+
+- refuses private, loopback and link-local addresses, both for the address typed in and for every request a scanned page makes;
+- caps scans at 5 pages and about 80 seconds;
+- allows 5 scans per visitor every 10 minutes on each server instance;
+- runs one scan at a time per instance;
+- never logs the address that was scanned.
+
+For a limit that holds across instances, add a Vercel Firewall rate-limit rule on `POST /api/scan`.
 
 ## Licence
 

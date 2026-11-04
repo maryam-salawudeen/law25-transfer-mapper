@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Law 25 Transfer Mapper</title>
+<meta name="description" content="See which companies a website sends visitor data to, where they're based, and get a draft of the privacy impact assessment Québec's Law 25 requires. Free and open source.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f4e79'/%3E%3Cpath d='M9 22l6-12 3 7 2-3 3 8' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f7f5f0; --surface: #ffffff; --fg: #1b1d20; --muted: #5d6166; --line: #e2ddd2;
+  --accent: #1f4e79; --accent-fg: #ffffff; --accent-soft: #e6eef6;
+  --high: #a3251d; --high-bg: #fbe9e7; --warn: #7d5300; --warn-bg: #fdf2d8; --ok: #2b6436; --ok-bg: #e5f2e7;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121315; --surface: #1b1c1f; --fg: #e9e7e2; --muted: #a2a29d; --line: #2d2f33;
+    --accent: #8fb8de; --accent-fg: #0f1a24; --accent-soft: #1d2a36;
+    --high: #ffb4a9; --high-bg: #3a1916; --warn: #f2c66d; --warn-bg: #33280f; --ok: #9fd3a9; --ok-bg: #16281a;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--accent); }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+header.site { padding: 20px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.brand { font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); }
+.brand svg { flex: none; }
+.nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
+.nav a:hover { color: var(--fg); }
+.hero { padding: 40px 0 24px; }
+h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.12; margin: 0 0 14px; letter-spacing: -0.02em; max-width: 18ch; }
+.lede { font-size: 18px; color: var(--muted); max-width: 60ch; margin: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin: 28px 0; }
+form { display: grid; gap: 16px; }
+.row { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 12px; }
+@media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+label { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+label span.hint { font-weight: 400; color: var(--muted); }
+input, select { font: inherit; font-size: 16px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; width: 100%; }
+input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.url-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+@media (max-width: 560px) { .url-row { grid-template-columns: 1fr; } }
+button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 11px 22px; cursor: pointer; background: var(--accent); color: var(--accent-fg); }
+button[disabled] { opacity: .6; cursor: progress; }
+button.secondary { background: var(--accent-soft); color: var(--accent); }
+.fine { font-size: 14px; color: var(--muted); margin: 0; }
+.status { display: none; align-items: center; gap: 12px; margin-top: 16px; color: var(--muted); }
+.status.on { display: flex; }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+.error { display: none; margin-top: 16px; padding: 12px 14px; border-radius: 8px; background: var(--high-bg); color: var(--high); }
+.error.on { display: block; }
+#results { display: none; }
+#results.on { display: block; }
+.downloads { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 18px; }
+.report-frame { width: 100%; height: 80vh; min-height: 520px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+h2 { font-size: 22px; margin: 48px 0 12px; letter-spacing: -0.01em; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 760px) { .grid3 { grid-template-columns: 1fr; } }
+.grid3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.grid3 h3 { margin: 0 0 6px; font-size: 16px; }
+.grid3 p { margin: 0; color: var(--muted); font-size: 15px; }
+ul.plain { padding-left: 20px; } ul.plain li { margin: 6px 0; }
+footer { border-top: 1px solid var(--line); margin-top: 56px; padding: 24px 0 40px; font-size: 14px; color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <a class="brand" href="/">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1f4e79"/><path d="M9 22l6-12 3 7 2-3 3 8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Law 25 Transfer Mapper
+    </a>
+    <nav class="nav"><a href="https://github.com/maryam-salawudeen/law25-transfer-mapper" rel="noreferrer">Source on GitHub</a></nav>
+  </header>
+
+  <section class="hero">
+    <h1>Where does your website send visitors' data?</h1>
+    <p class="lede">Enter a website address. We'll visit it like a first-time visitor, list every company it sends data to and where they're based, and draft the privacy impact assessment Québec's Law 25 requires before personal information leaves the province.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="scan-title">
+    <h2 id="scan-title" class="sr-only">Scan a website</h2>
+    <form id="scan-form" novalidate>
+      <label for="url">Website address
+        <div class="url-row">
+          <input id="url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://www.example.ca" required>
+          <button id="go" type="submit">Scan</button>
+        </div>
+      </label>
+      <div class="row">
+        <label for="org">Organization name <span class="hint">Optional, shown in the reports</span>
+          <input id="org" name="org" type="text" maxlength="120" autocomplete="organization">
+        </label>
+        <label for="pages">Pages to visit <span class="hint">More pages take longer</span>
+          <select id="pages" name="pages">
+            <option value="1">1 page</option>
+            <option value="3" selected>3 pages</option>
+            <option value="5">5 pages</option>
+          </select>
+        </label>
+      </div>
+      <p class="fine">A scan takes about 30 seconds to 2 minutes. We don't click the cookie banner, so you see what loads before a visitor agrees to anything. Please scan sites you're responsible for or have permission to assess.</p>
+    </form>
+    <div id="status" class="status" role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><span id="status-text"></span></div>
+    <div id="error" class="error" role="alert"></div>
+  </section>
+
+  <section id="results" aria-labelledby="results-title">
+    <h2 id="results-title">Results</h2>
+    <p id="results-summary" class="fine"></p>
+    <div class="downloads">
+      <button type="button" class="secondary" data-dl="pia">Download PIA draft (.md)</button>
+      <button type="button" class="secondary" data-dl="html">Download report (.html)</button>
+      <button type="button" class="secondary" data-dl="csv">Download inventory (.csv)</button>
+      <button type="button" class="secondary" data-dl="json">Download data (.json)</button>
+    </div>
+    <iframe id="report" class="report-frame" title="Scan report" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
+  </section>
+
+  <h2>What it checks</h2>
+  <div class="grid3">
+    <div><h3>Who gets the data</h3><p>Every outside company the site contacts, matched against a list of about 100 known vendors, with where each is headquartered.</p></div>
+    <div><h3>What's sent</h3><p>Visitor and ad-click IDs, cookies, contact details (often hashed), email addresses, and forms that submit straight to a third party.</p></div>
+    <div><h3>What Law 25 asks</h3><p>Flags transfers outside Québec (s. 17) and tracking that loads before any choice (s. 8.1), then drafts the four-factor assessment for each recipient.</p></div>
+  </div>
+
+  <h2>Good to know</h2>
+  <ul class="plain">
+    <li><strong>It's not legal advice.</strong> It shows what a website sent during an automated visit, so have the results reviewed by your privacy officer.</li>
+    <li><strong>Headquarters isn't where data is processed.</strong> Confirm each vendor's processing location in its data processing agreement. Other Canadian provinces count as outside Québec.</li>
+    <li><strong>Before consent only.</strong> Tools that load after a visitor accepts cookies, logs in or checks out, and server-to-server transfers, aren't visible here.</li>
+    <li><strong>Private by design.</strong> We don't keep the addresses you scan or the results; they go straight back to your browser. The scanner stores parameter names, never their values.</li>
+    <li><strong>Want more pages or to scan privately?</strong> Run the <a href="https://github.com/maryam-salawudeen/law25-transfer-mapper" rel="noreferrer">open source command-line version</a> on your own computer.</li>
+  </ul>
+
+  <footer>
+    Informational only, not legal advice. Legal references are to the <a href="https://www.legisquebec.gouv.qc.ca/en/document/cs/P-39.1" rel="noreferrer">Act respecting the protection of personal information in the private sector (CQLR c. P-39.1)</a>. MIT licensed, <a href="https://github.com/maryam-salawudeen/law25-transfer-mapper" rel="noreferrer">source on GitHub</a>.
+  </footer>
+</div>
+
+<script>
+(() => {
+  const form = document.getElementById("scan-form");
+  const go = document.getElementById("go");
+  const status = document.getElementById("status");
+  const statusText = document.getElementById("status-text");
+  const errorBox = document.getElementById("error");
+  const results = document.getElementById("results");
+  const summary = document.getElementById("results-summary");
+  const frame = document.getElementById("report");
+  let last = null;
+  let timer = null;
+
+  const steps = [
+    [0, "Opening the site in a browser"],
+    [8, "Visiting pages and recording requests"],
+    [35, "Still visiting pages. Some sites load slowly"],
+    [75, "Matching companies and writing the reports"],
+  ];
+
+  function setBusy(on) {
+    go.disabled = on;
+    go.textContent = on ? "Scanning" : "Scan";
+    status.classList.toggle("on", on);
+    clearInterval(timer);
+    if (on) {
+      const start = Date.now();
+      const tick = () => {
+        const s = Math.round((Date.now() - start) / 1000);
+        const step = steps.filter(([t]) => s >= t).pop()[1];
+        statusText.textContent = `${step}… ${s}s`;
+      };
+      tick();
+      timer = setInterval(tick, 1000);
+    }
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.toggle("on", Boolean(msg));
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = form.url.value.trim();
+    if (!url) { showError("Enter a website address."); form.url.focus(); return; }
+    showError("");
+    setBusy(true);
+    try {
+      const res = await fetch("/api/scan", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url, org: form.org.value, maxPages: Number(form.pages.value) }),
+      });
+      const data = await res.json().catch(() => ({ error: "The scanner returned an unexpected response. Please try again." }));
+      if (!res.ok) throw new Error(data.error || "The scan failed.");
+      last = data;
+      const s = data.summary;
+      summary.textContent = `${s.thirdParties} ${s.thirdParties === 1 ? "company" : "companies"} received data from ${s.pagesVisited} page(s): ${s.outsideQuebec} headquartered outside Québec, ${s.high} high priority. Download the files below, or read the full report.`;
+      // Links in the report open in a new tab; the frame runs no scripts.
+      frame.srcdoc = data.files.html.replace("<head>", '<head><base target="_blank">');
+      results.classList.add("on");
+      results.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  document.querySelectorAll("[data-dl]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      if (!last) return;
+      const kind = btn.dataset.dl;
+      const host = (() => { try { return new URL(last.report.site.startUrl).hostname; } catch { return "site"; } })();
+      const content = kind === "json" ? JSON.stringify(last.report, null, 2) : last.files[kind];
+      const type = { pia: "text/markdown", html: "text/html", csv: "text/csv", json: "application/json" }[kind];
+      const name = { pia: "pia-draft.md", html: "report.html", csv: "inventory.csv", json: "report.json" }[kind];
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([content], { type: type + ";charset=utf-8" }));
+      a.download = `${host}-${name}`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }),
+  );
+})();
+</script>
+</body>
+</html>

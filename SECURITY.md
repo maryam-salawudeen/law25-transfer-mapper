@@ -10,7 +10,8 @@ This tool runs a headless browser against websites you choose and writes reports
 
 - a scanned site being able to run code outside the browser sandbox, or write files outside the output folder;
 - report files (HTML, CSV) that can run script or spreadsheet formulas from content the scanned site controls;
-- query string values, request bodies or other personal information ending up in reports when they should not.
+- query string values, request bodies or other personal information ending up in reports when they should not;
+- the hosted scanner (law25-transfer-mapper.vercel.app) reaching private, internal or cloud metadata addresses, or being usable to attack other sites.
 
 ## Using the tool safely
 

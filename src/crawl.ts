@@ -1,4 +1,4 @@
-import { chromium, type BrowserContext, type Page, type Request } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Page, type Request } from "playwright";
 import { containsEmail, queryKeys } from "./detect.js";
 import { hostOf, isFirstParty, registrableDomain, stripQuery } from "./site.js";
 import type { CookieRecord, CrawlResult, FormRecord, PageRecord, RequestRecord } from "./types.js";
@@ -15,8 +15,12 @@ export interface CrawlOptions {
   timeoutMs?: number;
   respectRobots?: boolean;
   headless?: boolean;
-  /** For tests: lets a caller set up route interception before any page opens. */
+  /** Lets a caller set up route interception before any page opens (tests, and the web service's network guard). */
   setupContext?: (context: BrowserContext) => Promise<void>;
+  /** Starts the browser. Defaults to Playwright's own Chromium; the web service passes a serverless build. */
+  launch?: () => Promise<Browser>;
+  /** Stop visiting new pages after this time (epoch ms). */
+  deadline?: number;
   onPage?: (url: string, index: number) => void;
 }
 
@@ -29,7 +33,7 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
   const firstPartySites = [registrableDomain(startUrl), ...(opts.alsoFirstParty ?? []).map(registrableDomain)];
   const startedAt = new Date().toISOString();
 
-  const browser = await chromium.launch({ headless: opts.headless ?? true });
+  const browser = opts.launch ? await opts.launch() : await chromium.launch({ headless: opts.headless ?? true });
   try {
     // Identify the crawler honestly, without the "HeadlessChrome" marker that some sites use to skip their tags.
     const userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version().split(".")[0]}.0.0.0 Safari/537.36 ${TOOL_UA_TOKEN}`;
@@ -54,7 +58,7 @@ export async function crawl(opts: CrawlOptions): Promise<CrawlResult> {
     const forms: Omit<FormRecord, "actionSite">[] = [];
     const page = await context.newPage();
 
-    while (queue.length > 0 && pages.length < maxPages) {
+    while (queue.length > 0 && pages.length < maxPages && Date.now() < (opts.deadline ?? Infinity)) {
       const url = queue.shift()!;
       if (robots && !robots(new URL(url).pathname)) {
         skippedByRobots.push(url);
