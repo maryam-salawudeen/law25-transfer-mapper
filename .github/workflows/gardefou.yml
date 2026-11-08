@@ -1,0 +1,29 @@
+name: Privacy and AI review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MODEL: qwen2.5-coder:3b
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          curl -sf http://localhost:11434/api/tags >/dev/null || (nohup ollama serve > /tmp/ollama.log 2>&1 &)
+          for i in $(seq 1 60); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 1; done
+          ollama pull "$MODEL"
+
+      - uses: maryam-salawudeen/gardefou@v0
+        with:
+          ai-provider: ollama
+          model: ${{ env.MODEL }}zsq
