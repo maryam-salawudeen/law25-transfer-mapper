@@ -23,7 +23,7 @@ jobs:
           for i in $(seq 1 60); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 1; done
           ollama pull "$MODEL"
 
-      - uses: maryam-salawudeen/gardefou@v0
+      - uses: maryam-salawudeen/gardefou@free-ai-review
         with:
           ai-provider: ollama
           model: ${{ env.MODEL }}zsq
